@@ -19,7 +19,7 @@ object MatrixMult2 {
    * Retorna si se va a correr el programa en modo depuracion.
    * En este modo se dejan codigo adicional que puede facetar el rendimiento. Ejemplo: guardar archivos
    */
-    def isDebug(): Boolean = { true }
+    def isDebug(): Boolean = { false }
     
     /**
      * lee un archivo correspondiente a una matriz.
@@ -48,7 +48,20 @@ object MatrixMult2 {
     
     
     def createGroups(index: String, ngroups: Integer, value: String): Array[(String, String)] = {
+       val array = new Array[(String, String)](ngroups)
+      val dataSplit =  value.split(" ")
       
+      val sizeGroup = dataSplit.size/ngroups
+      var from = 0
+      var until = from + sizeGroup
+      
+      //key = index,group
+      for(i <- 0 until ngroups) {      
+        array(i) = (index+","+(i+1) -> dataSplit.slice(from, until).mkString(" "))
+        from = until
+        until = from + sizeGroup
+      }
+      array         
     }
     
     /**
@@ -58,7 +71,8 @@ object MatrixMult2 {
     def getIndexColVar(indexRow: String, ncol: Integer, value: String): Array[(String, String)] = {
       val array = new Array[(String, String)](ncol)
       for(i <- 0 until ncol) {
-        array(i) = (indexRow+","+(i+1) -> value)
+        val indexArray = indexRow.split(",")
+        array(i) = (indexArray(0)+","+(i+1)+","+indexArray(1) -> value)
       }
       array
     }
@@ -105,12 +119,12 @@ object MatrixMult2 {
     val ngroups = 2;
     
     //Lee archivo matriz-1
-    val mat1 = sc.textFile("data/matriz_a1.dat")
-    //var mat1 = sc.textFile("hdfs://localhost:8020/user/matrix/matriz_a.dat")  
+    //val mat1 = sc.textFile("data/matriz_a1.dat")
+    val mat1 = sc.textFile("hdfs://localhost:8020/user/matrix/matriz_a.dat")  
     
     //Lee archivo matriz-1. Convierte columnas en filas
-    val mat2 = matColumnsToRows(sc, "data/matriz_b1.dat")
-    //val mat2 = matColumnsToRows(sc, "hdfs://localhost:8020/user/matrix/matriz_b-128.dat")
+    //val mat2 = matColumnsToRows(sc, "data/matriz_b1.dat")
+    val mat2 = matColumnsToRows(sc, "hdfs://localhost:8020/user/matrix/matriz_b-128.dat")
     
     val nrows = mat1.count()
     val ncol = mat2.count()
@@ -129,15 +143,18 @@ object MatrixMult2 {
     //1,1 2 3 4    1,1,1 2    1,2 3 4
     
     val mat1KeyRowGroup = mat1KeyRow.flatMap{ case (k, v) =>  createGroups(k.toString(), ngroups, v) } 
+    if(isDebug) mat1KeyRowGroup.foreach(println)
     
+    val mat2KeyColGroup = mat2KeyCol.flatMap{ case (k, v) =>  createGroups(k.toString(), ngroups, v) } 
+    if(isDebug) mat2KeyColGroup.foreach(println)
     
     //Para cada fila, crea todas las combinaciones segun las multiplicaciones q debe realizar
     //Esto es para cada fila crea los key correspondientes a la posicios d ela matriz resultado
     //(1,1,1.0e0 4.0e0),(1,2,1.0e0 4.0e0),(1,3,1.0e0 4.0e0),(1,4,1.0e0 4.0e0),(2,1,2.0e0 5.0e0)    
-    val mat1KeyRowCol = mat1KeyRow.flatMap{ case (k, v) =>  getIndexColVar(k.toString(), ncol.toInt, v) }  
+    val mat1KeyRowCol = mat1KeyRowGroup.flatMap{ case (k, v) =>  getIndexColVar(k.toString(), ncol.toInt, v) }  
     if(isDebug) mat1KeyRowCol.foreach(println)
     
-    val mat2KeyRowCol = mat2KeyCol.flatMap{ case (k, v) =>  getIndexRowVar(k.toString(), nrows.toInt, v) }  
+    val mat2KeyRowCol = mat2KeyColGroup.flatMap{ case (k, v) =>  getIndexRowVar(k.toString(), nrows.toInt, v) }  
     if(isDebug) mat2KeyRowCol.foreach(println)
     
     //hace un join de las dos matrices aprovechando el key generado en el paso anterior
@@ -148,11 +165,17 @@ object MatrixMult2 {
     println("matJoin:")
     if(isDebug) matResultKeyRowCol.foreach(println)
     
+    println("sffadfsdgsdf:")
+    
     //Realiza la multiplicacion y suma de la fila por la columna
-    val result =  matResultKeyRowCol.map{ case (k, v) => (k -> multiply(v)) }
+    val result =  matResultKeyRowCol.map{ case (k, v) => (k -> multiply(v)) }.map{ case (k, v) =>(k.split(",").slice(0, 2).mkString("-") ->  v.toDouble)}
     if(isDebug) result.foreach(println)
     
-    result.saveAsTextFile("data/out") 
+    
+    val result2  = result.reduceByKey((x, y) => x+y)
+    if(isDebug) result2.foreach(println)
+    
+    result2.saveAsTextFile("data/out") 
     
     sc.stop     
     println("Fin")
