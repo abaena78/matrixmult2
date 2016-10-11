@@ -1,6 +1,10 @@
 
 
-package bigdata.matmult2
+//package bigdata.matmult2
+/*******************************************************************************************************
+ * CLASE DE SCALA MODIFICA PARA PODERSE EJECUTAR EN spark-shell como script
+ * SE ejjecuta: :load MatrixMult2.script.scala
+ */
 
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
@@ -13,7 +17,7 @@ import org.apache.spark.rdd._
  * Multiplicacion de matrices no dispersas
  * No hace division por bandas
  */
-object MatrixMult2 {
+//object MatrixMult2 {
   
   /**
    * Retorna si se va a correr el programa en modo depuracion.
@@ -108,9 +112,9 @@ object MatrixMult2 {
     /**
      * programa principal de multiplicacion de matrices no dispersas
      */
-    def main(args: Array[String]): Unit = {    
-      val conf = new SparkConf().setAppName("matrix-mult2").setMaster("local")
-      val sc = new SparkContext(conf) 
+//    def main(args: Array[String]): Unit = {    
+//      val conf = new SparkConf().setAppName("matrix-mult2").setMaster("local")
+//      val sc = new SparkContext(conf) 
             
       /* *********************************************************************************************/
       //CONFIGIRACION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -182,6 +186,6 @@ object MatrixMult2 {
       result.saveAsTextFile(directoryOutput) 
       println("Fin")
       
-      sc.stop     
-  }
-}
+//      sc.stop     
+//  }
+//}
