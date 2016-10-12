@@ -145,17 +145,17 @@ object MatrixMult2 {
     println("Inicia")
 
     //Lee archivo matriz-1
-    val mat1 = sc.textFile(mat1FilePath)
+    val mat1 = sc.textFile(mat1FilePath).persist()
 
     //Lee archivo matriz-2
-    val mat2 = sc.textFile(mat2FilePath)
+    val mat2 = sc.textFile(mat2FilePath).persist()
 
     //Convierte columnas en filas
     val mat2Transpose = matColumnsToRows(mat2)
 
     val nrows = mat1.count()
     val ncol = mat2Transpose.count()
-    println("nrows=" + nrows + ", ncol=" + ncol)
+    if (isDebug) println("nrows=" + nrows + ", ncol=" + ncol)
 
     // Le asigna Indica a cada fila, y la mapea como key 
     // (1,1.0e0 4.0e0),(2,2.0e0 5.0e0),...
